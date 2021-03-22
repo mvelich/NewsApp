@@ -29,7 +29,18 @@ class NewsViewController: UIViewController {
         super.viewDidLoad()
         configureTableView()
         configureSearchBar()
-        fetchNewsFromDB()
+        didAppLaunchBeforeCheck()
+    }
+    
+    private func didAppLaunchBeforeCheck() {
+        if appLaunched {
+            fetchNewsFromDB()
+        } else {
+            newsManager.performRequest(refreshData: false, counter: scrollCounter) { [weak self] in
+                guard let self = self else { return }
+                self.fetchNewsFromDB()
+            }
+        }
     }
     
     private func fetchNewsFromDB() {
@@ -39,7 +50,7 @@ class NewsViewController: UIViewController {
             DispatchQueue.main.async {
                 self.tableView.reloadData()
             }
-        } catch let dbError as NSError{
+        } catch let dbError as NSError {
             print("Unexpected error during retrieving data: \(dbError).")
         }
     }
@@ -50,6 +61,7 @@ class NewsViewController: UIViewController {
         tableView.refreshControl = UIRefreshControl()
         tableView.refreshControl?.tintColor = .red
         tableView.refreshControl?.addTarget(self, action: #selector(didPullToRefresh), for: .valueChanged)
+        tableView.separatorColor = .systemRed
     }
     
     @objc private func didPullToRefresh() {
@@ -72,7 +84,11 @@ class NewsViewController: UIViewController {
         searchController.searchBar.delegate = self
         searchController.searchBar.autocapitalizationType = .none
         searchController.searchBar.returnKeyType = .done
-        searchController.searchBar.tintColor = .red
+        searchController.searchBar.backgroundColor = .systemRed
+        searchController.searchBar.tintColor = .white
+        searchController.searchBar.searchTextField.layer.borderWidth = 0.2
+        searchController.searchBar.searchTextField.layer.cornerRadius = 10
+        searchController.searchBar.searchTextField.layer.borderColor = UIColor.black.cgColor
         searchController.searchBar.searchTextField.textColor = .black
         searchController.searchBar.searchTextField.placeholder = "Search by title"
         searchController.searchBar.searchTextField.autocapitalizationType = .sentences
@@ -164,6 +180,7 @@ extension NewsViewController: UISearchResultsUpdating, UISearchBarDelegate {
             $0.title!.contains(searchText)
         }
         tableView.reloadData()
+        tableView.tableFooterView = UIView()
     }
 }
 
@@ -185,7 +202,7 @@ extension NewsViewController: CustomCellDelegate {
                 cell.showMoreLessButton.setTitle("Show More", for: .normal)
                 news.isOpen = false
             }
-            tableView.reloadRows(at: [indexPath], with: .none)
+            tableView.reloadData()
         }
     }
 }

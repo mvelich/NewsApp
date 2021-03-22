@@ -8,13 +8,22 @@
 import UIKit
 import CoreData
 
+var appLaunched = false
+
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        
+        let launchedBefore = UserDefaults.standard.bool(forKey: "launchedBefore")
+        if launchedBefore {
+            appLaunched = true
+        } else {
+            UserDefaults.standard.setValue(true, forKey: "launchedBefore")
+        }
+        
         return true
     }
 
