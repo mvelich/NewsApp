@@ -4,9 +4,10 @@
         <attribute name="image" optional="YES" attributeType="URI"/>
         <attribute name="isOpen" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="newsDescription" optional="YES" attributeType="String"/>
+        <attribute name="publishTime" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="title" optional="YES" attributeType="String"/>
     </entity>
     <elements>
-        <element name="News" positionX="-63" positionY="-18" width="128" height="89"/>
+        <element name="News" positionX="-63" positionY="-18" width="128" height="104"/>
     </elements>
 </model>

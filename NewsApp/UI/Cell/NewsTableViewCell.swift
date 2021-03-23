@@ -47,7 +47,7 @@ class NewsTableViewCell: UITableViewCell {
         } else {
             self.showMoreLessButton.isHidden = true
         }
-        
+         
         self.descriptionTextLabel.numberOfLines = news.isOpen ? 0 : 3
         self.showMoreLessButton.setTitle(news.isOpen ? "Show Less" : "Show More", for: .normal)
     }

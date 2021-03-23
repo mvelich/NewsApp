@@ -7,6 +7,7 @@
 
 import UIKit
 import Kingfisher
+import CoreData
 
 class NewsViewController: UIViewController {
     
@@ -41,7 +42,7 @@ class NewsViewController: UIViewController {
     
     private func didAppLaunchBeforeCheck() {
         if appLaunchedFirstTime {
-            newsManager.performRequest(refreshData: false, counter: scrollCounter) { [weak self] in
+            newsManager.performRequest(refreshData: true, counter: scrollCounter) { [weak self] in
                 guard let self = self else { return }
                 self.fetchNewsFromDB()
             }
@@ -51,31 +52,36 @@ class NewsViewController: UIViewController {
     }
     
     private func fetchNewsFromDB() {
+        newsManager.newsArray.removeAll()
+        let fetchRequest = NSFetchRequest<News>(entityName: "News")
+        let sort = NSSortDescriptor(key: #keyPath(News.publishTime), ascending: false)
+        fetchRequest.sortDescriptors = [sort]
         do {
-            newsManager.newsArray = try context.fetch(News.fetchRequest())
+            newsManager.newsArray = try context.fetch(fetchRequest)
+            
             if newsManager.newsArray.isEmpty {
-                scrollCounter += 1
-                newsManager.performRequest(refreshData: true, counter: scrollCounter) { [weak self] in
+                scrollCounter += 1 
+                newsManager.performRequest(refreshData: false, counter: scrollCounter) { [weak self] in
                     guard let self = self else { return }
                     self.fetchNewsFromDB()
                 }
             }
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
         } catch let dbError as NSError {
             print("Unexpected error during retrieving data: \(dbError).")
+        }
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
         }
     }
     
     @objc private func didPullToRefresh() {
         scrollCounter = 0
-        newsManager.performRequest(refreshData: true, counter: scrollCounter) {
-            self.fetchNewsFromDB()
+        newsManager.performRequest(refreshData: true, counter: scrollCounter) { [weak self] in
+            guard let self = self else { return }
             DispatchQueue.main.async {
                 self.tableView.refreshControl?.endRefreshing()
-                self.tableView.reloadData()
             }
+            self.fetchNewsFromDB()
         }
     }
     

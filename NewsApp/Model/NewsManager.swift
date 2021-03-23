@@ -13,7 +13,7 @@ class NewsManager {
     
     private let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     var newsArray = [News]()
-    private let apiKey = "0b407b246958415da128d59fa0ec6c9b"
+    private let apiKey = "300710d6dda3421e99bba57ecafb438c"
     
     func performRequest(refreshData: Bool, counter: Int, completion: @escaping () -> Void) {
         let httpRequest = buildRequest(counter: counter)
@@ -22,14 +22,7 @@ class NewsManager {
             switch (response.result) {
             case .success( _):
                 if refreshData {
-                    // remove all news from core data if user did pull to refresh
-                    self.newsArray.removeAll()
-                    let deleteRequest = NSBatchDeleteRequest(fetchRequest: News.fetchRequest())
-                    do {
-                        try self.context.execute(deleteRequest)
-                    } catch let dbError as NSError {
-                        print("Unexpected error during deleting data: \(dbError).")
-                    }
+                    self.clearNewsData()
                     self.parseJSON(responseData)
                 } else {
                     self.parseJSON(responseData)
@@ -50,12 +43,12 @@ class NewsManager {
                 news.image = newsItem.urlToImage ?? nil
                 news.title = newsItem.title
                 news.newsDescription = newsItem.description
-                
-                do {
-                    try self.context.save()
-                } catch let dbError as NSError {
-                    print("Unexpected error during saving data: \(dbError).")
-                }
+                news.publishTime = dateConverter(with: newsItem.publishedAt)
+            }
+            do {
+                try self.context.save()
+            } catch let dbError as NSError {
+                print("Unexpected error during saving data: \(dbError).")
             }
         } catch let jsonError as NSError{
             print("Unexpected error during JSON parsing: \(jsonError).")
@@ -70,5 +63,27 @@ class NewsManager {
         let resultDate = formatter.string(from: rightDate!)
         let resultRequest = "https://newsapi.org/v2/everything?q=IOS&language=en&pageSize=10&from=\(resultDate)&to=\(resultDate)&sortBy=publishedAt&apiKey=\(apiKey)"
         return resultRequest
+    }
+    
+    private func dateConverter(with stringDate: String?) -> Date? {
+        guard let stringDate = stringDate else {
+            return nil
+        }
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ssZZZ"
+        let date = dateFormatter.date(from: stringDate)
+        return date
+    }
+    
+    func clearNewsData() {
+        do {
+            let dataAray = try context.fetch(News.fetchRequest())
+            for news in dataAray {
+                context.delete(news as! NSManagedObject)
+            }
+            try self.context.save()
+        } catch let dbError as NSError {
+            print("Unexpected error during deleting data: \(dbError).")
+        }
     }
 }
