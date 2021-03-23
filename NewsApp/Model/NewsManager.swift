@@ -22,6 +22,7 @@ class NewsManager {
             switch (response.result) {
             case .success( _):
                 if refreshData {
+                    // remove all news from core data if user did pull to refresh
                     self.newsArray.removeAll()
                     let deleteRequest = NSBatchDeleteRequest(fetchRequest: News.fetchRequest())
                     do {
@@ -62,6 +63,7 @@ class NewsManager {
     }
     
     private func buildRequest(counter: Int) -> String {
+        // Build date for request based on scrollCounter value
         let rightDate = Calendar.current.date(byAdding: .day, value: -counter, to: Date())
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"

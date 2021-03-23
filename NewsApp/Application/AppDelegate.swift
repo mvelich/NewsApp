@@ -8,7 +8,7 @@
 import UIKit
 import CoreData
 
-var appLaunched = false
+var appLaunchedFirstTime = true
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -19,7 +19,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         let launchedBefore = UserDefaults.standard.bool(forKey: "launchedBefore")
         if launchedBefore {
-            appLaunched = true
+            appLaunchedFirstTime = false
         } else {
             UserDefaults.standard.setValue(true, forKey: "launchedBefore")
         }

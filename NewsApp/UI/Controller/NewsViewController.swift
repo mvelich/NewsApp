@@ -14,6 +14,7 @@ class NewsViewController: UIViewController {
     private let searchController = UISearchController(searchResultsController: nil)
     private let newsManager = NewsManager()
     private var filteredNews = [News]()
+    private let maxDaysValue = 7
     private var scrollCounter = 0
     private var searchBarIsEmpty: Bool {
         guard let text = searchController.searchBar.text else { return false }
@@ -23,45 +24,48 @@ class NewsViewController: UIViewController {
         return searchController.isActive && !searchBarIsEmpty
     }
     
-    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var tableView: UITableView! {
+        didSet{
+            tableView.delegate = self
+            tableView.dataSource = self
+            tableView.separatorColor = .systemRed
+            addRefreshControll()
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        configureTableView()
         configureSearchBar()
         didAppLaunchBeforeCheck()
     }
     
     private func didAppLaunchBeforeCheck() {
-        if appLaunched {
-            fetchNewsFromDB()
-        } else {
+        if appLaunchedFirstTime {
             newsManager.performRequest(refreshData: false, counter: scrollCounter) { [weak self] in
                 guard let self = self else { return }
                 self.fetchNewsFromDB()
             }
+        } else {
+            fetchNewsFromDB()
         }
     }
     
     private func fetchNewsFromDB() {
         do {
             newsManager.newsArray = try context.fetch(News.fetchRequest())
-            
+            if newsManager.newsArray.isEmpty {
+                scrollCounter += 1
+                newsManager.performRequest(refreshData: true, counter: scrollCounter) { [weak self] in
+                    guard let self = self else { return }
+                    self.fetchNewsFromDB()
+                }
+            }
             DispatchQueue.main.async {
                 self.tableView.reloadData()
             }
         } catch let dbError as NSError {
             print("Unexpected error during retrieving data: \(dbError).")
         }
-    }
-    
-    private func configureTableView() {
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.refreshControl = UIRefreshControl()
-        tableView.refreshControl?.tintColor = .red
-        tableView.refreshControl?.addTarget(self, action: #selector(didPullToRefresh), for: .valueChanged)
-        tableView.separatorColor = .systemRed
     }
     
     @objc private func didPullToRefresh() {
@@ -103,6 +107,12 @@ class NewsViewController: UIViewController {
         spinner.startAnimating()
         return footerView
     }
+    
+    private func addRefreshControll() {
+        tableView.refreshControl = UIRefreshControl()
+        tableView.refreshControl?.tintColor = .red
+        tableView.refreshControl?.addTarget(self, action: #selector(didPullToRefresh), for: .valueChanged)
+    }
 }
 
 //MARK: - UITableViewDataSource
@@ -116,36 +126,8 @@ extension NewsViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: Constants.Cell.reusableTableCellIdentifier.rawValue, for: indexPath) as! NewsTableViewCell
         cell.customCellDelegate = self
-        
-        let news: News
-        let filteringResult = isFiltering ? filteredNews[indexPath.row] : newsManager.newsArray[indexPath.row]
-        news = filteringResult
-        
-        let url = news.image
-        if url == nil {
-            cell.newsImageView.image = UIImage(named: "default_news_image")
-        } else {
-            cell.newsImageView.kf.setImage(with: url)
-        }
-        
-        cell.titleTextLabel.text = news.title ?? "*No title*"
-        cell.descriptionTextLabel.text = news.newsDescription ?? "*No description*"
-        if cell.descriptionTextLabel!.isTruncated() {
-            cell.showMoreLessButton.isHidden = false
-        } else if cell.descriptionTextLabel.countLabelLines() > 3 {
-            cell.showMoreLessButton.isHidden = false
-        } else {
-            cell.showMoreLessButton.isHidden = true
-        }
-        
-        if news.isOpen {
-            cell.descriptionTextLabel.numberOfLines = 0
-            cell.showMoreLessButton.setTitle("Show Less", for: .normal)
-        } else {
-            cell.descriptionTextLabel.numberOfLines = 3
-            cell.showMoreLessButton.setTitle("Show More", for: .normal)
-        }
-        
+        let news = isFiltering ? filteredNews[indexPath.row] : newsManager.newsArray[indexPath.row]
+        cell.updateCell(with: news)
         return cell
     }
 }
@@ -154,10 +136,11 @@ extension NewsViewController: UITableViewDataSource {
 extension NewsViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if indexPath.row == self.newsManager.newsArray.count - 1 && scrollCounter < 7 {
+        if indexPath.row == self.newsManager.newsArray.count - 1 && scrollCounter < maxDaysValue {
             scrollCounter += 1
             tableView.tableFooterView = createSpinner()
-            newsManager.performRequest(refreshData: false, counter: scrollCounter) {
+            newsManager.performRequest(refreshData: false, counter: scrollCounter) { [weak self] in
+                guard let self = self else { return }
                 self.fetchNewsFromDB()
                 DispatchQueue.main.async {
                     self.tableView.tableFooterView = nil
@@ -182,6 +165,18 @@ extension NewsViewController: UISearchResultsUpdating, UISearchBarDelegate {
         tableView.reloadData()
         tableView.tableFooterView = UIView()
     }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        for subview in self.tableView.subviews {
+            if let refresh = subview as? UIRefreshControl {
+                refresh.removeFromSuperview()
+            }
+        }
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        addRefreshControll()
+    }
 }
 
 // MARK: - CustomCellDelegate
@@ -189,19 +184,11 @@ extension NewsViewController: CustomCellDelegate {
     
     func didPressShowButton(_ cell: NewsTableViewCell) {
         if let indexPath = tableView.indexPath(for: cell) {
-            let news: News
-            let filteringResult = isFiltering ? filteredNews[indexPath.row] : newsManager.newsArray[indexPath.row]
-            news = filteringResult
-            
-            if cell.showMoreLessButton.titleLabel?.text == "Show More" {
-                cell.descriptionTextLabel.numberOfLines = 0
-                cell.showMoreLessButton.setTitle("Show Less", for: .normal)
-                news.isOpen = true
-            } else {
-                cell.descriptionTextLabel.numberOfLines = 3
-                cell.showMoreLessButton.setTitle("Show More", for: .normal)
-                news.isOpen = false
-            }
+            let news = isFiltering ? filteredNews[indexPath.row] : newsManager.newsArray[indexPath.row]
+            let isOpen = cell.showMoreLessButton.titleLabel?.text == "Show More"
+            cell.descriptionTextLabel.numberOfLines = isOpen ? 0 : 3
+            cell.showMoreLessButton.setTitle(isOpen ? "Show Less" : "Show More", for: .normal)
+            news.isOpen = isOpen
             tableView.reloadData()
         }
     }
