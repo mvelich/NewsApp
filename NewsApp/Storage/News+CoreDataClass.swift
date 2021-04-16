@@ -2,7 +2,7 @@
 //  News+CoreDataClass.swift
 //  NewsApp
 //
-//  Created by Maksim Velich on 23.03.21.
+//  Created by Maksim Velich on 4.04.21.
 //
 //
 

@@ -8,7 +8,6 @@
 import UIKit
 
 extension UITableViewCell{
-    
     var tableView: UITableView? {
         return superview as? UITableView
     }

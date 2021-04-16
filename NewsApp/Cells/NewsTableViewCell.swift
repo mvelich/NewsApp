@@ -52,4 +52,3 @@ class NewsTableViewCell: UITableViewCell {
         self.showMoreLessButton.setTitle(news.isOpen ? "Show Less" : "Show More", for: .normal)
     }
 }
-

@@ -6,8 +6,11 @@
 //
 
 struct Constants {
-    
     enum Cell: String {
         case reusableTableCellIdentifier = "NewsTableViewCell"
+    }
+    
+    enum DataValues: String {
+        case maxPaginationDays = "7"
     }
 }

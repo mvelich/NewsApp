@@ -7,12 +7,12 @@
 
 import Foundation
 
-struct NewsData: Codable {
+struct NewsData: Decodable {
     let totalResults: Int
     let articles: [Article]
 }
 
-struct Article: Codable {
+struct Article: Decodable {
     let title: String?
     let description: String?
     let urlToImage: URL?

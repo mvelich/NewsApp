@@ -49,7 +49,9 @@
                                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kUZ-1j-7gn">
                                                     <rect key="frame" x="326" y="118.5" width="72" height="28"/>
                                                     <fontDescription key="fontDescription" type="boldSystem" pointSize="13"/>
-                                                    <state key="normal" title="Show More"/>
+                                                    <state key="normal" title="Show More">
+                                                        <color key="titleColor" red="1" green="0.27066819079999999" blue="0.18335287" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                    </state>
                                                     <state key="selected" title="Show More"/>
                                                     <connections>
                                                         <action selector="showMoreLessButtonPressed:" destination="ePx-9B-s4E" eventType="touchUpInside" id="7xB-aF-Lev"/>

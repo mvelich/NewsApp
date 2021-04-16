@@ -8,7 +8,6 @@
 import UIKit
 import CoreData
 
-var appLaunchedFirstTime = true
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -17,12 +16,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        let launchedBefore = UserDefaults.standard.bool(forKey: "launchedBefore")
-        if launchedBefore {
-            appLaunchedFirstTime = false
-        } else {
-            UserDefaults.standard.setValue(true, forKey: "launchedBefore")
-        }
+        UserDefaultsManager.countUserSession()
         
         return true
     }
@@ -87,3 +81,4 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
 }
+

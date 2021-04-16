@@ -2,7 +2,7 @@
 //  News+CoreDataProperties.swift
 //  NewsApp
 //
-//  Created by Maksim Velich on 23.03.21.
+//  Created by Maksim Velich on 4.04.21.
 //
 //
 
@@ -19,8 +19,8 @@ extension News {
     @NSManaged public var image: URL?
     @NSManaged public var isOpen: Bool
     @NSManaged public var newsDescription: String?
-    @NSManaged public var title: String?
     @NSManaged public var publishTime: Date?
+    @NSManaged public var title: String?
 
 }
 

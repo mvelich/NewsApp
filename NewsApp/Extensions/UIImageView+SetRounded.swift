@@ -8,7 +8,6 @@
 import UIKit
 
 extension UIImageView {
-    
     func setRounded() {
         self.layer.masksToBounds = true
         self.layer.borderWidth = 1
